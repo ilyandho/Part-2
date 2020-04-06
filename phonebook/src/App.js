@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import Filter from "./components/Filter";
 import Persons from "./components/Persons";
 import NewNumbers from "./components/NewNumbers";
+import Notification from "./components/Notification";
 
 import personService from "./services/persons";
 
@@ -11,6 +12,7 @@ const App = () => {
   const [newName, setNewName] = useState("");
   const [newNumber, setNewNumber] = useState("");
   const [filters, setFilters] = useState("");
+  const [errorMessage, setErrorMessage] = useState(null);
 
   const handleNameChange = (e) => {
     setNewName(e.target.value);
@@ -39,11 +41,11 @@ const App = () => {
         )
         ? updatePerson(existingUserId, contact)
         : console.log("Not added")
-      : personService
-          .create(contact)
-          .then((returnedPersons) =>
-            setPersons(persons.concat(returnedPersons))
-          );
+      : personService.create(contact).then((returnedPersons) => {
+          setPersons(persons.concat(returnedPersons));
+          setErrorMessage([`Added ${newName} `, "success"]);
+          setTimeout(() => setErrorMessage(null), 5000);
+        });
   };
 
   const handleDelete = (id, name) => {
@@ -52,37 +54,56 @@ const App = () => {
     console.log(confirmation);
 
     confirmation
-      ? personService.remove(id).then((response) => {
-          console.log("deleted", response);
-          const afterDelete = persons.filter(
-            (person) => person.id !== response.id
-          );
-          console.log("after", afterDelete);
-          setPersons(afterDelete);
-        })
+      ? personService
+          .remove(id)
+          .then((response) => {
+            console.log("deleted", response);
+            setErrorMessage([
+              `${name} has succeccfully been deleted`,
+              "danger",
+            ]);
+            setTimeout(() => setErrorMessage(null), 5000);
+            const afterDelete = persons.filter(
+              (person) => person.id !== response.id
+            );
+            console.log("after", afterDelete);
+            setPersons(afterDelete);
+          })
+          .catch((err) => {
+            setErrorMessage([
+              `${name} has already been removed from the server`,
+              "danger",
+            ]);
+            setTimeout(() => setErrorMessage(null), 5000);
+          })
       : console.log("not deleted");
   };
 
   const updatePerson = (id, userObject) => {
     personService.update(id, userObject).then((updateInfo) => {
-      console.log(updateInfo);
-      // setPersons(updateInfo);
       setPersons(
         persons.map((person) => (person.id !== id ? person : updateInfo))
       );
+      setErrorMessage([`${newName} has been updated`, "success"]);
+      setTimeout(() => setErrorMessage(null), 5000);
       console.log(persons);
     });
   };
   const personsHook = () => {
     personService
       .getAll()
-      .then((innititalPersons) => setPersons(innititalPersons));
+      .then((innititalPersons) =>
+        setPersons(
+          innititalPersons.filter((person) => person.name !== undefined)
+        )
+      );
   };
   useEffect(personsHook, []);
 
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification message={errorMessage} />
       <Filter filters={filters} setFilters={setFilters} />
       <h2>Add a new</h2>
       <NewNumbers
