@@ -49,6 +49,7 @@ const App = () => {
   };
 
   const handleDelete = (id, name) => {
+    console.log("deleting ...");
     console.log("id", id);
     const confirmation = window.confirm(`Delete ${name}`);
     console.log(confirmation);
@@ -63,9 +64,10 @@ const App = () => {
               "danger",
             ]);
             setTimeout(() => setErrorMessage(null), 5000);
-            const afterDelete = persons.filter(
-              (person) => person.id !== response.id
-            );
+            const afterDelete = persons.filter((person) => {
+              console.log(person.id, response.id, id);
+              return person.id !== id;
+            });
             console.log("after", afterDelete);
             setPersons(afterDelete);
           })

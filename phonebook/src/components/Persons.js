@@ -6,7 +6,7 @@ const Person = ({ persons, filters, handleDelete }) => {
       {persons
         .filter((person) => person.name.toLowerCase().includes(filters))
         .map((person) => (
-          <p key={person.name}>
+          <p key={person.id}>
             {person.name} {person.number}{" "}
             <button
               type="button"
