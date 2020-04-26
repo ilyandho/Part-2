@@ -1,17 +1,17 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 
-import Filter from "./components/Filter";
-import Persons from "./components/Persons";
-import NewNumbers from "./components/NewNumbers";
-import Notification from "./components/Notification";
+import Filter from './components/Filter';
+import Persons from './components/Persons';
+import NewNumbers from './components/NewNumbers';
+import Notification from './components/Notification';
 
-import personService from "./services/persons";
+import personService from './services/persons';
 
 const App = () => {
   const [persons, setPersons] = useState([]);
-  const [newName, setNewName] = useState("");
-  const [newNumber, setNewNumber] = useState("");
-  const [filters, setFilters] = useState("");
+  const [newName, setNewName] = useState('');
+  const [newNumber, setNewNumber] = useState('');
+  const [filters, setFilters] = useState('');
   const [errorMessage, setErrorMessage] = useState(null);
 
   const handleNameChange = (e) => {
@@ -40,17 +40,27 @@ const App = () => {
           `${newName} is already added to phonebook, replace the old one with a new one?`
         )
         ? updatePerson(existingUserId, contact)
-        : console.log("Not added")
-      : personService.create(contact).then((returnedPersons) => {
-          setPersons(persons.concat(returnedPersons));
-          setErrorMessage([`Added ${newName} `, "success"]);
-          setTimeout(() => setErrorMessage(null), 5000);
-        });
+        : console.log('Not added')
+      : personService
+          .create(contact)
+          .then((returnedPersons) => {
+            setPersons(persons.concat(returnedPersons));
+            setErrorMessage([`Added ${newName} `, 'success']);
+            setTimeout(() => setErrorMessage(null), 5000);
+          })
+          .catch((err) => {
+            setErrorMessage([err.response.data.message, 'danger']);
+            setTimeout(() => setErrorMessage(null), 5000);
+          });
+  };
+
+  const handleFilter = () => {
+    console.log('filters');
   };
 
   const handleDelete = (id, name) => {
-    console.log("deleting ...");
-    console.log("id", id);
+    console.log('deleting ...');
+    console.log('id', id);
     const confirmation = window.confirm(`Delete ${name}`);
     console.log(confirmation);
 
@@ -58,47 +68,47 @@ const App = () => {
       ? personService
           .remove(id)
           .then((response) => {
-            console.log("deleted", response);
+            console.log('deleted', response);
             setErrorMessage([
               `${name} has succeccfully been deleted`,
-              "danger",
+              'danger',
             ]);
             setTimeout(() => setErrorMessage(null), 5000);
             const afterDelete = persons.filter((person) => {
               console.log(person.id, response.id, id);
               return person.id !== id;
             });
-            console.log("after", afterDelete);
+            console.log('after', afterDelete);
             setPersons(afterDelete);
           })
           .catch((err) => {
-            setErrorMessage([
-              `${name} has already been removed from the server`,
-              "danger",
-            ]);
+            setErrorMessage([err.response.data.message, 'danger']);
             setTimeout(() => setErrorMessage(null), 5000);
           })
-      : console.log("not deleted");
+      : console.log('not deleted');
   };
 
   const updatePerson = (id, userObject) => {
-    personService.update(id, userObject).then((updateInfo) => {
-      setPersons(
-        persons.map((person) => (person.id !== id ? person : updateInfo))
-      );
-      setErrorMessage([`${newName} has been updated`, "success"]);
-      setTimeout(() => setErrorMessage(null), 5000);
-      console.log(persons);
-    });
+    personService
+      .update(id, userObject)
+      .then((updateInfo) => {
+        console.log(updateInfo);
+        setPersons(
+          persons.map((person) => (person.id !== id ? person : updateInfo))
+        );
+        setErrorMessage([`${newName} has been updated`, 'success']);
+        setTimeout(() => setErrorMessage(null), 5000);
+        console.log(persons);
+      })
+      .catch((err) => {
+        setErrorMessage([err.response.data.message, 'danger']);
+        setTimeout(() => setErrorMessage(null), 5000);
+      });
   };
   const personsHook = () => {
-    personService
-      .getAll()
-      .then((innititalPersons) =>
-        setPersons(
-          innititalPersons.filter((person) => person.name !== undefined)
-        )
-      );
+    personService.getAll().then((innitialPersons) => {
+      setPersons(innitialPersons.filter((person) => person.name !== null));
+    });
   };
   useEffect(personsHook, []);
 
@@ -106,7 +116,11 @@ const App = () => {
     <div>
       <h2>Phonebook</h2>
       <Notification message={errorMessage} />
-      <Filter filters={filters} setFilters={setFilters} />
+      <Filter
+        filters={filters}
+        setFilters={setFilters}
+        handleFilter={handleFilter}
+      />
       <h2>Add a new</h2>
       <NewNumbers
         handleNameChange={handleNameChange}
